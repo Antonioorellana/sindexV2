@@ -683,7 +683,7 @@ class SindExFlet:
         return ft.Column(
             [
                 self.title("Socios", "Carga y revisión del padrón de socios activos."),
-                card(ft.Column([ft.Row([self.socios_month, self.socios_file, secondary("Seleccionar", lambda _e: self.pick_file("socios")), primary("Cargar padrón", self.load_socios)], spacing=10, wrap=True), ft.Row([metric("Socios activos", str(resumen["activos"]), f"último mes {resumen['ultimo_mes'] or '-'}"), metric("Socios totales", str(resumen["total"]), "base local")], spacing=12)], spacing=14)),
+                card(ft.Column([ft.Row([self.socios_month, self.socios_file, secondary("Seleccionar", self.pick_socios_file), primary("Cargar padrón", self.load_socios)], spacing=10, wrap=True), ft.Row([metric("Socios activos", str(resumen["activos"]), f"último mes {resumen['ultimo_mes'] or '-'}"), metric("Socios totales", str(resumen["total"]), "base local")], spacing=12)], spacing=14)),
                 card(ft.Column([ft.Text("Socios activos recientes", weight=ft.FontWeight.BOLD, color=C.text), table(["RUT", "Nombre", "Local", "Activo", "Mes carga"], rows)], spacing=10), expand=True),
             ],
             spacing=16,
@@ -823,7 +823,7 @@ class SindExFlet:
         return ft.Column(
             [
                 self.title("Conciliación", "Cruce de planilla mensual CESJUN/SIJUAN contra FUNS."),
-                card(ft.Column([ft.Row([self.conc_month, self.conc_monthly_file, secondary("Planilla mensual", lambda _e: self.pick_file("monthly"))], spacing=10, wrap=True), ft.Row([self.conc_funs_file, secondary("Archivo FUNS", lambda _e: self.pick_file("funs")), primary("Conciliar mes", self.run_conciliation), secondary("Exportar este mes", self.export_current_report)], spacing=10, wrap=True)], spacing=12)),
+                card(ft.Column([ft.Row([self.conc_month, self.conc_monthly_file, secondary("Planilla mensual", self.pick_monthly_file)], spacing=10, wrap=True), ft.Row([self.conc_funs_file, secondary("Archivo FUNS", self.pick_funs_file), primary("Conciliar mes", self.run_conciliation), secondary("Exportar este mes", self.export_current_report)], spacing=10, wrap=True)], spacing=12)),
                 ft.ResponsiveRow([ft.Container(metric("Total enviado", _money(resumen["total_enviado_funs"]), "FUNS"), col={"xs": 12, "md": 3}), ft.Container(metric("Total descontado", _money(resumen["total_descontado_cesjun"]), "CESJUN"), col={"xs": 12, "md": 3}), ft.Container(metric("Diferencia total", _money(resumen["diferencia"]), "resultado", "warn" if int(resumen["diferencia"]) else "ok"), col={"xs": 12, "md": 3}), ft.Container(metric("Casos", str(len(detail)), "conciliados"), col={"xs": 12, "md": 3})], spacing=12),
                 card(ft.Column([ft.Text("Detalle de conciliación", weight=ft.FontWeight.BOLD), table(["Estado", "RUT", "Nombre", "FUNS", "CESJUN", "Diferencia"], rows)], spacing=10), expand=True),
             ],
@@ -1029,31 +1029,31 @@ class SindExFlet:
         self.notify(f"Backup creado: {backup.name if backup else 'sin base de datos'}")
         self.refresh()
 
-    def export_discounts(self, _e=None) -> None:
+    async def export_discounts(self, _e=None) -> None:
         self.export_data = {"month": self.desc_month.value or _today_month()}
         self.save_action = "discounts"
-        path = self.save_picker.save_file(file_name=f"descuentos_funs_{self.export_data['month']}.xlsx", allowed_extensions=["xlsx"])
+        path = await self.save_picker.save_file(file_name=f"descuentos_funs_{self.export_data['month']}.xlsx", allowed_extensions=["xlsx"])
         if path:
             self._save_to_path(path)
 
-    def export_current_report(self, _e=None) -> None:
+    async def export_current_report(self, _e=None) -> None:
         self.export_data = {"month": self.conc_month.value or _today_month()}
         self.save_action = "report"
-        path = self.save_picker.save_file(file_name=f"reporte_conciliacion_{self.export_data['month']}.xlsx", allowed_extensions=["xlsx"])
+        path = await self.save_picker.save_file(file_name=f"reporte_conciliacion_{self.export_data['month']}.xlsx", allowed_extensions=["xlsx"])
         if path:
             self._save_to_path(path)
 
-    def export_report_tab(self, _e=None) -> None:
+    async def export_report_tab(self, _e=None) -> None:
         self.export_data = {"month": self.report_month.value or _today_month()}
         self.save_action = "report"
-        path = self.save_picker.save_file(file_name=f"reporte_conciliacion_{self.export_data['month']}.xlsx", allowed_extensions=["xlsx"])
+        path = await self.save_picker.save_file(file_name=f"reporte_conciliacion_{self.export_data['month']}.xlsx", allowed_extensions=["xlsx"])
         if path:
             self._save_to_path(path)
 
-    def export_history(self, _e=None) -> None:
+    async def export_history(self, _e=None) -> None:
         self.export_data = {"year": self.history_year.value or _today_year(), "rut": self.history_rut.value or None}
         self.save_action = "history"
-        path = self.save_picker.save_file(file_name=f"historial_descuentos_{self.export_data['year']}.xlsx", allowed_extensions=["xlsx"])
+        path = await self.save_picker.save_file(file_name=f"historial_descuentos_{self.export_data['year']}.xlsx", allowed_extensions=["xlsx"])
         if path:
             self._save_to_path(path)
 
@@ -1079,9 +1079,9 @@ class SindExFlet:
             return
         self.notify(f"Archivo generado: {Path(output).name}")
 
-    def pick_file(self, target: str) -> None:
+    async def pick_file(self, target: str) -> None:
         self.file_target = target
-        files = self.file_picker.pick_files(allow_multiple=False, allowed_extensions=["xlsx", "xlsm"])
+        files = await self.file_picker.pick_files(allow_multiple=False, allowed_extensions=["xlsx", "xlsm"])
         if not files:
             return
         path = files[0].path
@@ -1092,6 +1092,15 @@ class SindExFlet:
         elif self.file_target == "funs":
             self.conc_funs_file.value = path
         self.page.update()
+
+    async def pick_socios_file(self, _e=None) -> None:
+        await self.pick_file("socios")
+
+    async def pick_monthly_file(self, _e=None) -> None:
+        await self.pick_file("monthly")
+
+    async def pick_funs_file(self, _e=None) -> None:
+        await self.pick_file("funs")
 
 
 def run() -> None:
