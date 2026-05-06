@@ -1,0 +1,30 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.pyo
+
+.venv/
+venv/
+env/
+
+# Datos reales y respaldos locales
+data/*.db
+data/backups/
+*.sqlite
+*.sqlite3
+
+# Planillas reales del sindicato
+archivos/*.xlsx
+archivos/*.xlsm
+archivos/*.xls
+reportes/*.xlsx
+reportes/*.xlsm
+reportes/*.xls
+
+# Archivos temporales de herramientas/editor
+.claude/
+.vscode/
+.idea/
+
+# Prueba manual de UI antigua
+test_ctk.py
